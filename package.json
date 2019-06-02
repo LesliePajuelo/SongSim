@@ -4,6 +4,9 @@
   "homepage": "https://colinmorris.github.io/SongSim/",
   "private": true,
   "devDependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "dom-parser": "^0.1.6",
+    "jsdom": "^15.1.1",
     "react-scripts": "0.9.0"
   },
   "dependencies": {
