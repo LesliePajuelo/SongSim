@@ -7,12 +7,14 @@ var EIGHTIES = {label: "80's", slug: "80s"};
 var NINETIES = {label: "90's", slug: "90s"};
 var NAUGHTS = {label: "00's", slug: "00s"};
 var CONTEMP = {label: "Contemporary", slug: "contemp"};
+var TnS = {label: "TnS", slug: "TnS"};
 
 var ORDERED_CATEGORIES = [
-  CONTEMP, NAUGHTS, NINETIES, EIGHTIES, SEVENTIES, SIXTIES, NR, POETRY, MISC
+  TnS, CONTEMP, NAUGHTS, NINETIES, EIGHTIES, SEVENTIES, SIXTIES, NR, POETRY, MISC
 ];
 
 var CANNED_SONGS = [
+  {slug: "drove me wild", artist: "TnS", title: "drove me wild", group: TnS.slug, dropdown: true},
   {slug: "12daysofxmas", artist: "", title: "The 12 Days Of Christmas", group: MISC.slug, dropdown: true},
   {slug: "4thofjuly", artist: "Kelis", title: "4th Of July", group: NAUGHTS.slug, hidden: true},
   {slug: "abc", artist: "Jackson 5", title: "ABC", group: SEVENTIES.slug, dropdown: true},

@@ -15,70 +15,130 @@ const DomParser = require('dom-parser');
 const parser = new DomParser();
 const fs = require("fs");
 const path = require('path');
-const cheerio = require('cheerio'),
+const cheerio = require('cheerio');
 
 const artistUrl = "https://songmeanings.com/artist/view/songs/7002/";
 
-// {folder, name, type}
-// saveHtml(artistUrl, {folder: "artistHTML", name: 'tns.html'})
-createSongFiles('tns.html')
-function saveHtml (url,options){
 
-    let {folder, name, type} = options;
+// saveHtml(artistUrl, { folder: "artistHTML", name: 'tns.html' }, cleanHTML)
+// createSongFiles('tns.html')
+cleanHTML("/Users/lesliepajuelo/work/SongSim/tns/100x.html", deleteHTML);
+function deleteHTML(filePath) {
+  fs.unlink(filePath, (err)=>{
+    err ? console.err(err) : console.info(`${filePath.split('/').pop} was deleted`);
+  })
+}
+function saveHtml(url, options, cleanHTML) {
 
-    https.get(url, (res) => {
+  let { folder, name } = options;
+  let file = path.join(__dirname, folder, `${name}.html`);
+
+  https.get(url, (res) => {
     const { statusCode } = res;
     const contentType = res.headers['content-type'];
 
     let error;
     if (statusCode !== 200) {
-        error = new Error('Request Failed.\n' +
-                        `Status Code: ${statusCode}`);
-    } 
+      error = new Error('Request Failed.\n' +
+        `Status Code: ${statusCode}`);
+    }
 
     if (error) {
-        console.error(error.message);
-        // Consume response data to free up memory
-        res.resume();
-        return;
+      console.error(error.message);
+      // Consume response data to free up memory
+      res.resume();
+      return;
     }
 
     res.setEncoding('utf8');
     let rawData = '';
     res.on('data', (chunk) => { rawData += chunk; });
     res.on('end', () => {
-        try {
+      try {
         let dom = parser.parseFromString(rawData);
-        let file = path.join(__dirname, folder, name)
-        fs.writeFile(file, dom, (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
+
+        fs.writeFile(file, dom.rawHTML, (err) => {
+          if (err) throw err;
+          console.info('The file has been saved!');
         });
 
-        } catch (e) {
+      } catch (e) {
         console.error(e.message);
-        }
+      }
     });
-    }).on('error', (e) => {
+  }).on('error', (e) => {
     console.error(`Got error: ${e.message}`);
-    });
+  });
+
+  cleanHTML(file);
 }
 
-function createSongFiles(artistHTML){
 
+function cleanHTML(filePath, deleteHTML) {
+  fs.readFile(filePath, 'utf8', dataLoaded);
 
-fs.readFile('complex.html', 'utf8', dataLoaded);
+  function dataLoaded(err, data) {
+    if (err) { console.error(err) }
 
-function dataLoaded(err, data) {
+    let lyrics = "";
     $ = cheerio.load('' + data + '');
-    $('#topLevelWrapper > div').each(function(i, elem) {
-        var id = $(elem).attr('id'),
-            filename = id + '.html',
-            content = $.html(elem);
-        fs.writeFile(filename, content, function(err) {
-            console.log('Written html to ' + filename);
-        });
-    });
-}
+    let cleanedLyrics = $(".lyric-box").text().replace(/Edit Lyrics/, "").replace(/Edit Wiki/, "").replace(/Add Video/, "").replace(/\/s+/, " ").trim();
+
+    txtFile = filePath.replace(/html/, "txt");
+    fs.writeFile(txtFile, cleanedLyrics, (err) => {
+     if (err) {
+       console.error(err)
+      } else {
+        console.info("Lyrics Written"); 
+        deleteHTML(filePath);
+    }
+  })
+  }
+
+};
+
+function createSongFiles(artistHTML) {
+  let slugs = [];
+
+  let file = path.join(__dirname, "artistHTML", artistHTML);
+  //getUrls of songs
+  fs.readFile(file, 'utf8', dataLoaded);
+
+  function dataLoaded(err, data) {
+    $ = cheerio.load('' + data + '');
+
+    function dasLoop() {
+      $("#songslist a").attr('class', '').each((i, elem) => {
+        if (i == 0) {
+          let url = `https:${elem.attribs.href}`;
+          let name = elem.children[0].data.trim().replace(/\s+/g, " ");
+          if (
+            (Number.isNaN(Number(name)))
+          ) {
+            // Create files
+            let folder = "tns";
+            saveHtml(url, { folder, name }, cleanHTML);
+            slugs.push(
+              {
+                slug: name,
+                title: name,
+                artist: "TnS",
+                group: "TnS",
+                dropdown: true
+              })
+          }
+
+        }
+      });
+      return slugs;
+    };
+    dasLoop();
+    if (slugs.length > 0) {
+      let location = path.join(__dirname, "artistHTML", "artistSlugs.js");
+      fs.writeFile(location, JSON.stringify(slugs), (err) => {
+        console.info('location written')
+      })
+    }
+  }
 
 }
