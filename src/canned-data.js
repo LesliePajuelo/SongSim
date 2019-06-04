@@ -8,13 +8,13 @@ var NINETIES = {label: "90's", slug: "90s"};
 var NAUGHTS = {label: "00's", slug: "00s"};
 var CONTEMP = {label: "Contemporary", slug: "contemp"};
 var TnS = {label: "TnS", slug: "TnS"};
-
+var tnsSlugs = require('../artistHTML/artistSlugs');
 var ORDERED_CATEGORIES = [
   TnS, CONTEMP, NAUGHTS, NINETIES, EIGHTIES, SEVENTIES, SIXTIES, NR, POETRY, MISC
 ];
 
 var CANNED_SONGS = [
-  {slug: "drove me wild", artist: "TnS", title: "drove me wild", group: TnS.slug, dropdown: true},
+  {slug:"All You Got", title:"All You Got",artist:"TnS", group:TnS.slug,  dropdown:true},
   {slug: "12daysofxmas", artist: "", title: "The 12 Days Of Christmas", group: MISC.slug, dropdown: true},
   {slug: "4thofjuly", artist: "Kelis", title: "4th Of July", group: NAUGHTS.slug, hidden: true},
   {slug: "abc", artist: "Jackson 5", title: "ABC", group: SEVENTIES.slug, dropdown: true},
@@ -153,8 +153,6 @@ var CANNED_SONGS = [
   {slug: "workbitch", artist: "Britney Spears", title: "Work Bitch", group: CONTEMP.slug},
   {slug: "wouldntitbenice", artist: "The Beach Boys", title: "Wouldn't It Be Nice", group: SIXTIES.slug, dropdown: true},
   {slug: "youbelongwithme", artist: "Taylor Swift", title: "You Belong With Me", group: NAUGHTS.slug},
-
-
   {slug: "goodvibrations", artist: "The Beach Boys", title: "Good Vibrations", group: SIXTIES.slug},
   {slug: "jimmymack", artist: "Martha & The Vandellas", title: "Jimmy Mack", group: SIXTIES.slug},
   {slug: "moreperfect", artist: "Barack Obama", title: "A More Perfect Union (excerpt)", group: MISC.slug},
@@ -166,5 +164,7 @@ var CANNED_SONGS = [
   {slug: "thatstheway", artist: "KC And The Sunshine Band", title: "That's The Way (I Like It)", group: SEVENTIES.slug},
   {slug: "think", artist: "Aretha Franklin", title: "Think", group: SIXTIES.slug},
 ];
+
+CANNED_SONGS = CANNED_SONGS.concat(tnsSlugs);
 
 export {ORDERED_CATEGORIES, CANNED_SONGS as default};
