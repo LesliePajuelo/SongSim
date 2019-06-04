@@ -20,35 +20,36 @@ const cheerio = require('cheerio');
 const artistUrl = "https://songmeanings.com/artist/view/songs/7002/";
 
 
-// saveHtml(artistUrl, { folder: "artistHTML", name: 'tns.html' }, cleanHTML)
+saveHtml(artistUrl, { folder: "artistHTML", name: 'tns', type: "artist" })
 // createSongFiles('tns.html')
-cleanHTML("/Users/lesliepajuelo/work/SongSim/tns/100x.html", deleteHTML);
+// html2txt("/Users/lesliepajuelo/work/SongSim/tns/100x.html", deleteHTML);
 function deleteHTML(filePath) {
+  console.count('deleteHTML');
   fs.unlink(filePath, (err)=>{
-    err ? console.err(err) : console.info(`${filePath.split('/').pop} was deleted`);
+    err ? console.error(err) : console.info(`${filePath.split('/').pop()} was deleted`);
   })
 }
-function saveHtml(url, options, cleanHTML) {
 
-  let { folder, name } = options;
+function saveHtml(url, options) {
+  console.count(`saveHtml ${url}`);
+  let { folder, name, type } = options;
   let file = path.join(__dirname, folder, `${name}.html`);
 
   https.get(url, (res) => {
     const { statusCode } = res;
-    const contentType = res.headers['content-type'];
 
     let error;
+
     if (statusCode !== 200) {
       error = new Error('Request Failed.\n' +
-        `Status Code: ${statusCode}`);
-    }
-
-    if (error) {
+      `Status Code: ${statusCode}`);
       console.error(error.message);
       // Consume response data to free up memory
       res.resume();
       return;
-    }
+      }
+
+
 
     res.setEncoding('utf8');
     let rawData = '';
@@ -59,7 +60,18 @@ function saveHtml(url, options, cleanHTML) {
 
         fs.writeFile(file, dom.rawHTML, (err) => {
           if (err) throw err;
-          console.info('The file has been saved!');
+          let fileName = file.split('/').pop();
+          console.count(`save html, write file ${fileName} for type ${type}`);
+
+          if (type === "artist"){
+            fs.readFile(file, 'utf8', (err)=>{
+              err ? console.error(err): null;
+              createSongFiles(file);
+              console.count(`if artist, send to create song file ${file.split('/').pop()}`)
+            })
+          } else {
+            html2txt(file);
+          };
         });
 
       } catch (e) {
@@ -70,26 +82,25 @@ function saveHtml(url, options, cleanHTML) {
     console.error(`Got error: ${e.message}`);
   });
 
-  cleanHTML(file);
 }
 
 
-function cleanHTML(filePath, deleteHTML) {
+function html2txt(filePath) {
+  console.count('html2txt');
   fs.readFile(filePath, 'utf8', dataLoaded);
 
   function dataLoaded(err, data) {
     if (err) { console.error(err) }
 
-    let lyrics = "";
     $ = cheerio.load('' + data + '');
     let cleanedLyrics = $(".lyric-box").text().replace(/Edit Lyrics/, "").replace(/Edit Wiki/, "").replace(/Add Video/, "").replace(/\/s+/, " ").trim();
 
-    txtFile = filePath.replace(/html/, "txt");
+    let txtFile = path.join(__dirname, "public", "canned", filePath.split('/').pop().replace(/html/, "txt"));
     fs.writeFile(txtFile, cleanedLyrics, (err) => {
      if (err) {
        console.error(err)
       } else {
-        console.info("Lyrics Written"); 
+        console.info(`Lyrics Written for ${txtFile.split('/').pop()}`); 
         deleteHTML(filePath);
     }
   })
@@ -98,26 +109,34 @@ function cleanHTML(filePath, deleteHTML) {
 };
 
 function createSongFiles(artistHTML) {
+  console.count('createSongFiles');
   let slugs = [];
+  let folder = "tns";
+  let type = "song";
 
-  let file = path.join(__dirname, "artistHTML", artistHTML);
   //getUrls of songs
-  fs.readFile(file, 'utf8', dataLoaded);
+  fs.readFile(artistHTML, 'utf8', dataLoaded);
 
   function dataLoaded(err, data) {
+    if (err) {
+      console.log(err)
+    }
     $ = cheerio.load('' + data + '');
 
     function dasLoop() {
+      console.count('dasLoop');
+
       $("#songslist a").attr('class', '').each((i, elem) => {
-        if (i == 0) {
+        if (i) {
           let url = `https:${elem.attribs.href}`;
           let name = elem.children[0].data.trim().replace(/\s+/g, " ");
+          console.log('name', name)
           if (
             (Number.isNaN(Number(name)))
           ) {
             // Create files
-            let folder = "tns";
-            saveHtml(url, { folder, name }, cleanHTML);
+            console.log('url in 131', url)
+            saveHtml(url, { folder, name, type });
             slugs.push(
               {
                 slug: name,
@@ -136,7 +155,7 @@ function createSongFiles(artistHTML) {
     if (slugs.length > 0) {
       let location = path.join(__dirname, "artistHTML", "artistSlugs.js");
       fs.writeFile(location, JSON.stringify(slugs), (err) => {
-        console.info('location written')
+        console.info(`${location.split('/').pop()} written`);
       })
     }
   }
